@@ -1,0 +1,307 @@
+KPI_3_HTML = 
+VAR Sales = SUM(Ventas[Sales])
+VAR SalesLY = SUM(Ventas[SalesLY])
+VAR Variacion = SUM(Ventas[Variacion])
+VAR Orders = SUM(Ventas[Orders])
+VAR Categories = SUM(Ventas[Categories])
+VAR Budget = SUM(Ventas[Budget])
+VAR SalesBudgetPct = DIVIDE(Sales, Budget, 0)
+
+-- Colores mejorados con transparencias
+VAR ColorPositivo = "#B1F0C0"
+VAR ColorNegativo = "#FFD5D5"
+VAR TextoPositivo = "#16A34A"
+VAR TextoNegativo = "#FB2C36"
+
+-- Flechas (paths optimizados)
+VAR IconPathUp = "M12 4l6 8h-4v8h-4v-8H6z"
+VAR IconPathDown = "M12 20l-6-8h4V4h4v8h4z"
+
+-- Lógica de color
+VAR IsPositive = Variacion >= 0
+VAR ColorFondo = IF(IsPositive, ColorPositivo, ColorNegativo)
+VAR ColorTexto = IF(IsPositive, TextoPositivo, TextoNegativo)
+VAR IconPath = IF(IsPositive, IconPathUp, IconPathDown)
+
+-- Color de la barra de progreso (verde/amarillo/rojo)
+VAR ColorProgreso = 
+    SWITCH(
+        TRUE(),
+        SalesBudgetPct >= 1, "#16A34A",      -- Verde: meta cumplida
+        SalesBudgetPct >= 0.8, "#F59E0B",    -- Amarillo: cerca
+        "#FB2C36"                             -- Rojo: lejos
+    )
+
+RETURN
+"
+<div style='
+  font-family: Segoe UI, system-ui, -apple-system, sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #F9FAFB 0%, #FFFFFF 100%);
+  border-radius: 12px;
+  padding: 1em;
+  box-sizing: border-box;
+  color: #111827;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+  transform: scale(0.8);
+  transform-origin: top left;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+'>
+
+  <style>
+    /* Hover sutil en toda la tarjeta */
+    div:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04) !important;
+    }
+
+    /* Tooltip animado mejorado */
+    .goal-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(90deg, #42D65A 0%, #35B84A 100%);
+      color: white;
+      padding: 0.6em 1em;
+      border-radius: 0 0 12px 12px;
+      font-weight: 600;
+      font-size: 0.9em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                  transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+    }
+    
+    div:hover > .goal-bar {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Barra de progreso animada mejorada */
+    @keyframes fillProgress {
+      from { 
+        width: 0%; 
+        opacity: 0.7;
+      }
+      to { 
+        width: var(--progress-width); 
+        opacity: 1;
+      }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -100px; }
+      100% { background-position: 200px; }
+    }
+
+    .progress-container {
+      background-color: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      width: 100px;
+      height: 14px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .progress-bar {
+      background: linear-gradient(
+        90deg,
+        var(--progress-color) 0%,
+        var(--progress-color) 100%
+      );
+      background-size: 200px 100%;
+      height: 100%;
+      width: 0%;
+      animation: fillProgress 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.4),
+        transparent
+      );
+      animation: shimmer 2s infinite;
+    }
+
+    /* Columna derecha optimizada */
+    .right-col {
+      width: 120px;
+      display: grid;
+      row-gap: 0.6em;
+      justify-items: end;
+      align-items: center;
+    }
+
+    .right-row {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      column-gap: 0.5em;
+      align-items: center;
+      width: 100%;
+      transition: transform 0.2s ease;
+    }
+
+    .right-row:hover {
+      transform: translateX(-3px);
+    }
+
+    .icon-cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #E0EAF6 0%, #D1E3F8 100%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .icon-cell:hover {
+      transform: scale(1.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .text-cell {
+      text-align: left;
+      color: #4B5563;
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Badge de variación mejorado */
+    .variation-badge {
+      background-color: " & ColorFondo & ";
+      color: " & ColorTexto & ";
+      padding: 0.25em 0.7em;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      transition: transform 0.2s ease;
+    }
+
+    .variation-badge:hover {
+      transform: scale(1.05);
+    }
+
+    /* Animación de entrada para el valor principal */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main-value {
+      animation: fadeInUp 0.6s ease-out;
+    }
+  </style>
+
+  <!-- Título -->
+  <div style='font-size: 1.2em; font-weight: 600; margin-bottom: 0.3em; color: #1F2937;'>
+    Total Sales
+  </div>
+
+  <!-- Contenido principal -->
+  <div style='display: flex; justify-content: space-between; align-items: stretch;'>
+
+    <!-- Lado izquierdo -->
+    <div style='display: flex; flex-direction: column;'>
+      <div class='main-value' style='font-size: 2em; font-weight: 700; color: #1F2937; line-height: 1.2;'>
+        $" & FORMAT(Sales, "#,0") & "
+      </div>
+
+      <div style='display: flex; align-items: center; margin-top: 0.5em; margin-bottom: 0.8em;'>
+        <div class='variation-badge'>
+          <svg viewBox='0 0 24 24' fill='" & ColorTexto & "' width='14' height='14'>
+            <path d='" & IconPath & "'/>
+          </svg>
+          " & FORMAT(ABS(Variacion) * 100, "0.0") & "%
+        </div>
+      </div>
+
+      <div style='font-size: 0.85em; color: #6B7280; line-height: 1.4;'>
+        Total Sales last year 
+        <span style='font-weight: 600; color: #4B5563;'>$" & FORMAT(SalesLY, "#,0") & "</span>
+      </div>
+    </div>
+
+    <!-- Lado derecho (centrado, fijo) -->
+    <div class='right-col'>
+      <div class='right-row'>
+        <div class='icon-cell'>
+          <svg viewBox='0 0 24 24' fill='#1E3A8A' width='14' height='14'>
+            <path d='M16 13H8v-2h8v2zm5-7v12c0 1.1-.9 2-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2h14c1.1 0 2 .9 2 2z'/>
+          </svg>
+        </div>
+        <div class='text-cell'>
+          <b style='color: #1F2937;'>" & FORMAT(Orders, "#,0") & "</b> Orders
+        </div>
+      </div>
+
+      <div class='right-row'>
+        <div class='icon-cell'>
+          <svg viewBox='0 0 24 24' fill='#1E3A8A' width='14' height='14'>
+            <path d='M3 5h18v2H3V5zm2 4h14v2H5V9zm-2 4h18v2H3v-2zm2 4h14v2H5v-2z'/>
+          </svg>
+        </div>
+        <div class='text-cell'>
+          <b style='color: #1F2937;'>" & FORMAT(Categories, "#,0") & "</b> Categories
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hover inferior (Goal + barra progreso animada) -->
+  <div class='goal-bar'>
+    <div style='display: flex; align-items: center; gap: 0.4em;'>
+      <svg viewBox='0 0 24 24' fill='white' width='16' height='16'>
+        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z'/>
+      </svg>
+      <span>Goal for the FY: <b>$" & FORMAT(Budget, "#,0") & "</b></span>
+    </div>
+    <div style='display: flex; align-items: center; gap: 0.6em;'>
+      <div class='progress-container' style='
+        --progress-width: " & FORMAT(MIN(SalesBudgetPct, 1) * 100, "0") & "%; 
+        --progress-color: " & ColorProgreso & ";
+      '>
+        <div class='progress-bar'></div>
+      </div>
+      <b>" & FORMAT(SalesBudgetPct * 100, "0") & "%</b>
+    </div>
+  </div>
+
+</div>
+"
