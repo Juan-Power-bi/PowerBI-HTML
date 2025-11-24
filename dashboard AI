@@ -1,0 +1,444 @@
+Panel_Impacto_Ambiental = 
+VAR ArbolesPlantados = 1247
+VAR CO2Reducido = 3856
+VAR ResiduosReciclados = 2.4
+VAR AguaAhorrada = 15680
+VAR EnergiaRenovable = 78
+VAR PlasticoEvitado = 892
+
+VAR MetaArboles = 2000
+VAR ProgresoArboles = DIVIDE(ArbolesPlantados, MetaArboles, 0)
+VAR ImpactoPositivo = 94
+
+RETURN
+"
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    overflow: hidden;
+  }
+
+  .eco-container {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    padding: 2em;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .eco-header {
+    text-align: center;
+    color: white;
+    margin-bottom: 2em;
+    animation: fadeInDown 0.8s ease;
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .eco-header h1 {
+    font-size: 2.8em;
+    margin: 0 0 0.3em 0;
+    background: linear-gradient(90deg, #10b981, #34d399, #6ee7b7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .eco-header p {
+    font-size: 1.1em;
+    opacity: 0.8;
+  }
+
+  .eco-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.5em;
+    flex: 1;
+  }
+
+  .eco-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 25px;
+    padding: 2em;
+    transition: all 0.3s ease;
+    animation: scaleIn 0.8s ease both;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .eco-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+  }
+
+  @keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .eco-card:nth-child(1) { animation-delay: 0.1s; }
+  .eco-card:nth-child(2) { animation-delay: 0.2s; }
+  .eco-card:nth-child(3) { animation-delay: 0.3s; }
+  .eco-card:nth-child(4) { animation-delay: 0.4s; }
+  .eco-card:nth-child(5) { animation-delay: 0.5s; }
+  .eco-card:nth-child(6) { animation-delay: 0.6s; }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .eco-card:hover {
+    transform: translateY(-10px);
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+  }
+
+  .eco-icon {
+    font-size: 4em;
+    margin-bottom: 0.5em;
+    animation: float 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+  }
+
+  .eco-value {
+    font-size: 3em;
+    font-weight: 800;
+    color: #10b981;
+    margin: 0.2em 0;
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    position: relative;
+    z-index: 1;
+  }
+
+  .eco-label {
+    font-size: 1em;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+  }
+
+  .eco-unit {
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.3em;
+    position: relative;
+    z-index: 1;
+  }
+
+  .large-card {
+    grid-column: span 3;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 2.5em;
+  }
+
+  .tree-visual {
+    position: relative;
+    width: 200px;
+    height: 200px;
+  }
+
+  .tree-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .tree-svg {
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 20px rgba(16, 185, 129, 0.5));
+  }
+
+  .tree-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 20;
+  }
+
+  .tree-progress {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 20;
+    stroke-linecap: round;
+    stroke-dasharray: 565;
+    stroke-dashoffset: " & (565 - (ProgresoArboles * 565)) & ";
+    animation: drawTree 2s ease-out forwards;
+  }
+
+  @keyframes drawTree {
+    from { stroke-dashoffset: 565; }
+  }
+
+  .tree-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .tree-emoji {
+    font-size: 4em;
+    animation: grow 2s ease-out forwards;
+  }
+
+  @keyframes grow {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+
+  .tree-count {
+    font-size: 2em;
+    font-weight: 800;
+    color: #10b981;
+    margin-top: 0.3em;
+  }
+
+  .impact-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5em;
+    justify-content: center;
+  }
+
+  .impact-item {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.2em;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 1em;
+    transition: all 0.3s ease;
+  }
+
+  .impact-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(10px);
+  }
+
+  .impact-icon {
+    font-size: 2.5em;
+  }
+
+  .impact-info {
+    flex: 1;
+  }
+
+  .impact-label {
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.3em;
+  }
+
+  .impact-value {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  .particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  .particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #10b981;
+    border-radius: 50%;
+    opacity: 0;
+    animation: particle-float 4s ease-in-out infinite;
+  }
+
+  .particle:nth-child(1) { left: 20%; animation-delay: 0s; }
+  .particle:nth-child(2) { left: 40%; animation-delay: 0.5s; }
+  .particle:nth-child(3) { left: 60%; animation-delay: 1s; }
+  .particle:nth-child(4) { left: 80%; animation-delay: 1.5s; }
+
+  @keyframes particle-float {
+    0% {
+      bottom: 0;
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      bottom: 100%;
+      opacity: 0;
+    }
+  }
+
+  .badge-positive {
+    position: absolute;
+    top: 1em;
+    right: 1em;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 0.5em 1em;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+    animation: pulse 2s ease-in-out infinite;
+    z-index: 2;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+</style>
+
+<div class='eco-container'>
+  <div class='eco-header'>
+    <h1>🌍 Impacto Ambiental 2024</h1>
+    <p>Tu contribución hacia un planeta más sostenible</p>
+  </div>
+
+  <div class='eco-grid'>
+    <div class='eco-card'>
+      <div class='eco-icon'>🌳</div>
+      <div class='eco-value'>" & FORMAT(ArbolesPlantados, "#,0") & "</div>
+      <div class='eco-label'>Árboles Plantados</div>
+      <div class='eco-unit'>este año</div>
+      <div class='particles'>
+        <div class='particle'></div>
+        <div class='particle'></div>
+        <div class='particle'></div>
+        <div class='particle'></div>
+      </div>
+    </div>
+
+    <div class='eco-card'>
+      <div class='eco-icon'>☁️</div>
+      <div class='eco-value'>" & FORMAT(CO2Reducido, "#,0") & "</div>
+      <div class='eco-label'>CO₂ Reducido</div>
+      <div class='eco-unit'>toneladas</div>
+    </div>
+
+    <div class='eco-card'>
+      <div class='eco-icon'>♻️</div>
+      <div class='eco-value'>" & FORMAT(ResiduosReciclados, "0.0") & "</div>
+      <div class='eco-label'>Residuos Reciclados</div>
+      <div class='eco-unit'>toneladas</div>
+    </div>
+
+    <div class='eco-card'>
+      <div class='eco-icon'>💧</div>
+      <div class='eco-value'>" & FORMAT(AguaAhorrada, "#,0") & "</div>
+      <div class='eco-label'>Agua Ahorrada</div>
+      <div class='eco-unit'>litros</div>
+    </div>
+
+    <div class='eco-card'>
+      <div class='eco-icon'>⚡</div>
+      <div class='eco-value'>" & EnergiaRenovable & "%</div>
+      <div class='eco-label'>Energía Renovable</div>
+      <div class='eco-unit'>de uso total</div>
+    </div>
+
+    <div class='eco-card'>
+      <div class='eco-icon'>🚫</div>
+      <div class='eco-value'>" & FORMAT(PlasticoEvitado, "#,0") & "</div>
+      <div class='eco-label'>Plástico Evitado</div>
+      <div class='eco-unit'>kilogramos</div>
+    </div>
+
+    <div class='eco-card large-card'>
+      <div class='badge-positive'>✨ +" & ImpactoPositivo & "% vs 2023</div>
+      <div class='tree-visual'>
+        <svg class='tree-svg' viewBox='0 0 200 200'>
+          <circle class='tree-bg' cx='100' cy='100' r='90'/>
+          <circle class='tree-progress' cx='100' cy='100' r='90'/>
+        </svg>
+        <div class='tree-center'>
+          <div class='tree-emoji'>🌲</div>
+          <div class='tree-count'>" & FORMAT(ProgresoArboles, "0%") & "</div>
+        </div>
+      </div>
+
+      <div class='impact-stats'>
+        <div style='text-align: center; color: white; margin-bottom: 1em;'>
+          <h2 style='font-size: 1.8em; margin: 0;'>Progreso Anual</h2>
+          <p style='opacity: 0.8; margin: 0.5em 0;'>Meta: " & FORMAT(MetaArboles, "#,0") & " árboles</p>
+        </div>
+        
+        <div class='impact-item'>
+          <div class='impact-icon'>🎯</div>
+          <div class='impact-info'>
+            <div class='impact-label'>Faltan por plantar</div>
+            <div class='impact-value'>" & FORMAT(MetaArboles - ArbolesPlantados, "#,0") & " árboles</div>
+          </div>
+        </div>
+
+        <div class='impact-item'>
+          <div class='impact-icon'>📈</div>
+          <div class='impact-info'>
+            <div class='impact-label'>Crecimiento</div>
+            <div class='impact-value'>+" & ImpactoPositivo & "% anual</div>
+          </div>
+        </div>
+
+        <div class='impact-item'>
+          <div class='impact-icon'>🏆</div>
+          <div class='impact-info'>
+            <div class='impact-label'>Equivalente a</div>
+            <div class='impact-value'>" & FORMAT(ArbolesPlantados * 2.5, "#,0") & " kg CO₂/año</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+"
