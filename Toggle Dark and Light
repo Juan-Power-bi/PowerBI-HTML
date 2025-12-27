@@ -1,0 +1,118 @@
+Toggle_Button_Enhanced = 
+VAR _isDarkMode = SELECTEDVALUE('Tabla_Estado_Tema'[Porcentaje], 0)
+VAR _isSelected = SELECTEDVALUE('Tabla_Estado_Tema'[Estado]) = SELECTEDVALUE('Tabla_Estado_Tema'[Estado], "Light")
+
+// Colores según el tema
+VAR _bg = IF(_isDarkMode = 1, "#1F2937", "#F9FAFB")
+VAR _icon = IF(_isDarkMode = 1, "☀️", "🌙")
+VAR _borderColor = IF(_isSelected, "#3B82F6", "transparent")
+VAR _glowColor = IF(_isDarkMode = 1, "#60A5FA", "#3B82F6")
+
+RETURN
+"data:image/svg+xml;utf8,
+<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'>
+  <defs>
+    <linearGradient id='btnGrad" & _isDarkMode & "' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' style='stop-color:" & IF(_isDarkMode = 1, "#374151", "#E0EAF6") & ";stop-opacity:1'/>
+      <stop offset='100%' style='stop-color:" & IF(_isDarkMode = 1, "#4B5563", "#D1E3F8") & ";stop-opacity:1'/>
+    </linearGradient>
+    
+    <filter id='shadow" & _isDarkMode & "'>
+      <feGaussianBlur in='SourceAlpha' stdDeviation='2'/>
+      <feOffset dx='0' dy='2' result='offsetblur'/>
+      <feComponentTransfer>
+        <feFuncA type='linear' slope='0.3'/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in='SourceGraphic'/>
+      </feMerge>
+    </filter>
+    
+    <filter id='glow'>
+      <feGaussianBlur stdDeviation='3' result='coloredBlur'/>
+      <feMerge>
+        <feMergeNode in='coloredBlur'/>
+        <feMergeNode in='SourceGraphic'/>
+      </feMerge>
+    </filter>
+    
+    <radialGradient id='shineGrad'>
+      <stop offset='0%' style='stop-color:white;stop-opacity:0.4'/>
+      <stop offset='100%' style='stop-color:white;stop-opacity:0'/>
+    </radialGradient>
+  </defs>
+  
+  <!-- Fondo del visual -->
+  <rect width='100' height='100' rx='12' fill='" & _bg & "'/>
+  
+  <!-- Ring exterior animado -->
+  <circle cx='50' cy='50' r='30' fill='none' stroke='" & _glowColor & "' stroke-width='1' opacity='0'>
+    <animate attributeName='r' values='28;35;28' dur='3s' repeatCount='indefinite'/>
+    <animate attributeName='opacity' values='0;0.3;0' dur='3s' repeatCount='indefinite'/>
+  </circle>
+  
+  <!-- Ring de selección (cuando está seleccionado) -->
+  " & IF(_isSelected, "
+  <circle cx='50' cy='50' r='25' fill='none' stroke='" & _borderColor & "' stroke-width='2' opacity='0.6'>
+    <animate attributeName='opacity' values='0.4;0.8;0.4' dur='2s' repeatCount='indefinite'/>
+    <animate attributeName='stroke-width' values='2;2.5;2' dur='2s' repeatCount='indefinite'/>
+  </circle>
+  ", "") & "
+  
+  <!-- Círculo de fondo del botón (con sombra dinámica) -->
+  <circle cx='50' cy='50' r='20' fill='url(%23btnGrad" & _isDarkMode & ")' filter='url(%23shadow" & _isDarkMode & ")' style='cursor:pointer;'>
+    <animate attributeName='r' values='20;21;20' dur='4s' repeatCount='indefinite'/>
+  </circle>
+  
+  <!-- Overlay de brillo que rota -->
+  <ellipse cx='45' cy='45' rx='8' ry='15' fill='url(%23shineGrad)' opacity='0.5'>
+    <animateTransform
+      attributeName='transform'
+      type='rotate'
+      from='0 50 50'
+      to='360 50 50'
+      dur='8s'
+      repeatCount='indefinite'/>
+  </ellipse>
+  
+  <!-- Partículas decorativas que orbitan -->
+  <circle cx='50' cy='30' r='1.5' fill='" & _glowColor & "' opacity='0'>
+    <animate attributeName='opacity' values='0;0.6;0' dur='3s' repeatCount='indefinite'/>
+    <animateTransform
+      attributeName='transform'
+      type='rotate'
+      from='0 50 50'
+      to='360 50 50'
+      dur='6s'
+      repeatCount='indefinite'/>
+  </circle>
+  
+  <circle cx='70' cy='50' r='1.5' fill='" & _glowColor & "' opacity='0'>
+    <animate attributeName='opacity' values='0;0.6;0' dur='3s' begin='1s' repeatCount='indefinite'/>
+    <animateTransform
+      attributeName='transform'
+      type='rotate'
+      from='120 50 50'
+      to='480 50 50'
+      dur='6s'
+      repeatCount='indefinite'/>
+  </circle>
+  
+  <circle cx='50' cy='70' r='1.5' fill='" & _glowColor & "' opacity='0'>
+    <animate attributeName='opacity' values='0;0.6;0' dur='3s' begin='2s' repeatCount='indefinite'/>
+    <animateTransform
+      attributeName='transform'
+      type='rotate'
+      from='240 50 50'
+      to='600 50 50'
+      dur='6s'
+      repeatCount='indefinite'/>
+  </circle>
+  
+  <!-- Icono (emoji) con leve escala -->
+  <text x='50' y='56' text-anchor='middle' font-size='22' style='pointer-events:none; user-select: none;' filter='url(%23glow)'>
+    " & _icon & "
+    <animate attributeName='font-size' values='22;23;22' dur='4s' repeatCount='indefinite'/>
+  </text>
+</svg>"
