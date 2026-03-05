@@ -1,0 +1,468 @@
+Carousel_Storytelling = 
+/* ============================================
+   Carousel - Olympic Storytelling
+   Versión: 2.0 - Executive Edition
+   Descripción: Carrusel profesional con 4 
+   análisis de datos olímpicos
+   ============================================ */
+
+-- ========== EVALUAR MEDIDAS PRIMERO ==========
+
+-- Story 1: Elite Gold Conversion Leaders
+VAR Story1_Content = [Storytelling 1]
+
+-- Story 2: Gender Evolution
+VAR Story2_Content = [Storytelling 2]
+
+-- Story 3: Win Rate Analysis
+VAR Story3_Content = [Storytelling 3]
+
+-- Story 4: Fun Facts
+VAR Story4_Content = [Storytelling 4]
+
+-- ========== CREAR TABLA CON VALORES EVALUADOS ==========
+VAR StoriesData = 
+    DATATABLE(
+        "StoryID", INTEGER,
+        "StoryTitle", STRING,
+        "StoryIcon", STRING,
+        "StoryColor", STRING,
+        "StoryContent", STRING,
+        {
+            {1, "Elite Gold Conversion", "🏆", "#10B981", ""}, 
+            {2, "Gender Evolution", "⚖️", "#3B82F6", ""},
+            {3, "Win Rate Analysis", "🥇", "#F59E0B", ""},
+            {4, "Fun Facts & Curiosities", "🎲", "#8B5CF6", ""}
+        }
+    )
+
+-- ========== AÑADIR CONTENIDO EVALUADO ==========
+VAR StoriesWithContent = 
+    ADDCOLUMNS(
+        StoriesData,
+        "Content",
+        SWITCH(
+            [StoryID],
+            1, Story1_Content,
+            2, Story2_Content,
+            3, Story3_Content,
+            4, Story4_Content,
+            ""
+        )
+    )
+
+VAR CarouselID = "carousel_" & RANDBETWEEN(1000, 9999)
+
+-- ========== GENERACIÓN DEL HTML ==========
+RETURN
+"
+<div class='carousel-container' id='" & CarouselID & "'>
+  
+  <!-- ========== ESTILOS CSS ========== -->
+  <style>
+    /* ----- Contenedor Principal ----- */
+    .carousel-container {
+      font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* ----- Header del Carrusel ----- */
+    .carousel-header {
+      background: #3049AD;
+      padding: 20px 28px;
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .carousel-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+      pointer-events: none;
+    }
+
+    .carousel-main-title {
+      font-size: 1.25em;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: -0.02em;
+      position: relative;
+      z-index: 1;
+    }
+
+    .carousel-subtitle {
+      font-size: 0.8em;
+      opacity: 0.85;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ----- Carrusel Wrapper ----- */
+    .carousel-wrapper {
+      display: flex;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 378px;
+      background: #fafafa;
+    }
+
+    /* ----- Slide Individual ----- */
+    .carousel-slide {
+      min-width: 100%;
+      box-sizing: border-box;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      background: #ffffff;
+    }
+
+    /* ----- Tab Header ----- */
+    .slide-tab-header {
+      background: linear-gradient(to bottom, #f8fafc, #ffffff);
+      padding: 16px 28px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+    }
+
+    .slide-tab-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 28px;
+      width: 60px;
+      height: 3px;
+      background: var(--accent-color, #3B82F6);
+      border-radius: 2px 2px 0 0;
+    }
+
+    .slide-icon {
+      font-size: 26px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+    }
+
+    .slide-title {
+      font-size: 1em;
+      font-weight: 600;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+
+    /* ----- Contenido del Slide ----- */
+    .slide-content {
+      padding: 28px;
+      overflow-y: auto;
+      max-height: 432px;
+      flex: 1;
+      background: #ffffff;
+    }
+
+    /* ----- Controles de Navegación ----- */
+    .carousel-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .carousel-nav-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .carousel-btn {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-size: 22px;
+      font-weight: 600;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      user-select: none;
+    }
+
+    .carousel-btn:hover {
+      background: #1e293b;
+      color: #ffffff;
+      border-color: #1e293b;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(30, 41, 59, 0.2);
+    }
+
+    .carousel-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ----- Indicadores ----- */
+    .carousel-indicators {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      border: 2px solid transparent;
+    }
+
+    .indicator:hover {
+      background: #94a3b8;
+      transform: scale(1.25);
+    }
+
+    .indicator.active {
+      background: #1e293b;
+      width: 32px;
+      border-radius: 4px;
+      border-color: #1e293b;
+    }
+
+    /* ----- Counter ----- */
+    .slide-counter {
+      font-size: 0.8em;
+      color: #475569;
+      font-weight: 600;
+      padding: 6px 14px;
+      background: #ffffff;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      letter-spacing: 0.02em;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    /* ----- Scrollbar personalizado ----- */
+    .slide-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .slide-content::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+
+    .slide-content::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .slide-content::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* ----- Animación de entrada ----- */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .carousel-slide.active .slide-content {
+      animation: slideIn 0.5s ease-out;
+    }
+
+    /* ----- Responsive ----- */
+    @media (max-width: 768px) {
+      .carousel-container {
+        max-width: 100%;
+        border-radius: 0;
+      }
+      
+      .slide-content {
+        padding: 20px;
+      }
+      
+      .carousel-controls {
+        padding: 12px 20px;
+      }
+    }
+  </style>
+
+  <!-- ========== ESTRUCTURA HTML ========== -->
+  
+  <!-- Header Principal -->
+  <div class='carousel-header'>
+    <div class='carousel-main-title'>📊 Olympic Analytics Dashboard</div>
+    <div class='carousel-subtitle'>Executive insights and performance metrics</div>
+  </div>
+
+  <!-- Carrusel Wrapper -->
+  <div class='carousel-wrapper'>
+    " & 
+    CONCATENATEX(
+        StoriesWithContent,
+        "<div class='carousel-slide' data-story-id='" & [StoryID] & "'>
+          <!-- Tab Header -->
+          <div class='slide-tab-header' style='--accent-color: " & [StoryColor] & ";'>
+            <div class='slide-icon'>" & [StoryIcon] & "</div>
+            <div class='slide-title'>" & [StoryTitle] & "</div>
+          </div>
+          
+          <!-- Content -->
+          <div class='slide-content'>
+            " & [Content] & "
+          </div>
+        </div>",
+        "",
+        [StoryID], ASC
+    ) & "
+  </div>
+
+  <!-- Controles -->
+  <div class='carousel-controls'>
+    <div class='carousel-nav-section'>
+      <button class='carousel-btn' data-action='prev' title='Previous analysis'>‹</button>
+    </div>
+    
+    <div class='carousel-indicators'></div>
+    
+    <div class='carousel-nav-section'>
+      <div class='slide-counter'>
+        <span class='current-slide'>1</span> / <span class='total-slides'>4</span>
+      </div>
+      <button class='carousel-btn' data-action='next' title='Next analysis'>›</button>
+    </div>
+  </div>
+
+  <!-- ========== JAVASCRIPT ========== -->
+  <script>
+    (function() {
+      const container = document.getElementById('" & CarouselID & "');
+      const wrapper = container.querySelector('.carousel-wrapper');
+      const slides = wrapper.querySelectorAll('.carousel-slide');
+      const totalSlides = slides.length;
+      const indicatorsContainer = container.querySelector('.carousel-indicators');
+      const buttons = container.querySelectorAll('.carousel-btn');
+      const currentSlideSpan = container.querySelector('.current-slide');
+      const totalSlidesSpan = container.querySelector('.total-slides');
+      
+      let currentSlide = 0;
+
+      // Actualizar total de slides
+      totalSlidesSpan.textContent = totalSlides;
+
+      // Crear indicadores
+      for (let i = 0; i < totalSlides; i++) {
+        const indicator = document.createElement('div');
+        indicator.className = 'indicator' + (i === 0 ? ' active' : '');
+        indicator.setAttribute('data-slide', i);
+        indicator.setAttribute('title', 'Analysis ' + (i + 1));
+        indicatorsContainer.appendChild(indicator);
+      }
+
+      function updateCarousel() {
+        const offset = -currentSlide * 100;
+        wrapper.style.transform = 'translateX(' + offset + '%)';
+        
+        // Actualizar contador
+        currentSlideSpan.textContent = currentSlide + 1;
+        
+        // Actualizar indicadores
+        const indicators = indicatorsContainer.querySelectorAll('.indicator');
+        indicators.forEach((indicator, index) => {
+          indicator.className = 'indicator' + (index === currentSlide ? ' active' : '');
+        });
+
+        // Actualizar clase active en slides
+        slides.forEach((slide, index) => {
+          if (index === currentSlide) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+      }
+
+      function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        updateCarousel();
+      }
+
+      function prevSlide() {
+        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+        updateCarousel();
+      }
+
+      function goToSlide(index) {
+        currentSlide = index;
+        updateCarousel();
+      }
+
+      // Event listeners para botones
+      buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          const action = this.getAttribute('data-action');
+          if (action === 'next') {
+            nextSlide();
+          } else if (action === 'prev') {
+            prevSlide();
+          }
+        });
+      });
+
+      // Event listeners para indicadores
+      indicatorsContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('indicator')) {
+          const slideIndex = parseInt(e.target.getAttribute('data-slide'));
+          goToSlide(slideIndex);
+        }
+      });
+
+      // Soporte para teclado
+      document.addEventListener('keydown', function(e) {
+        if (container.matches(':hover')) {
+          if (e.key === 'ArrowLeft') {
+            prevSlide();
+          } else if (e.key === 'ArrowRight') {
+            nextSlide();
+          }
+        }
+      });
+
+      // Inicializar
+      updateCarousel();
+    })();
+  </script>
+
+</div>
+"

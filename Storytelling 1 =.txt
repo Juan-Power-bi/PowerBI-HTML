@@ -1,0 +1,134 @@
+Storytelling 1 = 
+VAR TablaBase = 
+    SUMMARIZE(
+        'results',
+        'results'[Country],
+        "TotalGold", CALCULATE(COUNTROWS('results'), 'results'[Medal Type] = "Gold"),
+        "TotalSilver", CALCULATE(COUNTROWS('results'), 'results'[Medal Type] = "Silver"),
+        "TotalBronze", CALCULATE(COUNTROWS('results'), 'results'[Medal Type] = "Bronze"),
+        "TotalMedals", [#Athletes winners],  // CORREGIDO: Ahora usa la medida correcta
+        "FirstDecade", MIN('results'[Decade]),
+        "LastDecade", MAX('results'[Decade]),
+        "UniqueAthletes", [#Athletes]  // CORREGIDO: Ahora usa la medida correcta
+    )
+
+VAR TablaConRates = 
+    ADDCOLUMNS(
+        TablaBase,
+        "GoldRate", DIVIDE([TotalGold], [TotalMedals], 0),
+        "DecadesActive", DIVIDE([LastDecade] - [FirstDecade], 10) + 1,
+        "MedalsPerAthlete", DIVIDE([TotalMedals], [UniqueAthletes], 0)
+    )
+
+VAR Top5Countries = 
+    TOPN(
+        5,
+        FILTER(TablaConRates, [TotalMedals] >= 10),
+        [GoldRate],
+        DESC
+    )
+
+VAR GlobalGoldRate = 
+    DIVIDE(
+        CALCULATE(COUNTROWS('results'), 'results'[Medal Type] = "Gold"),
+        CALCULATE([#Athletes winners]),  // CORREGIDO: Para mantener consistencia
+        0
+    )
+
+// ============================================
+// CONSTRUCCIÓN DEL STORYTELLING ACCESIBLE
+// ============================================
+VAR StoryHeader = 
+    "<div style='margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #0D7C59;'>
+        <div style='font-size: 12px; font-weight: 700; color: #0A5C44; margin-bottom: 6px;'>
+            🏆 ELITE GOLD CONVERSION LEADERS
+        </div>
+        <div style='font-size: 10px; color: #4B5563;'>
+            Top 5 countries by gold medal conversion rate (minimum 10 medal winners)
+        </div>
+    </div>"
+
+VAR StoryContext = 
+    "<div style='font-size: 10px; color: #1F2937; margin-bottom: 14px; padding: 10px; background: #F3F4F6; border-radius: 4px;'>
+        <strong>Benchmark:</strong> Global average gold conversion rate is " & FORMAT(GlobalGoldRate, "0.0%") & "
+    </div>"
+
+// Generar ranking con indicadores claros de nivel
+VAR RankingList = 
+    CONCATENATEX(
+        TOPN(5, Top5Countries, [GoldRate], DESC),
+        VAR PerformanceLevel = 
+            SWITCH(TRUE(),
+                [GoldRate] > 0.50, "EXCEPTIONAL",
+                [GoldRate] > 0.40, "HIGH",
+                "STRONG"
+            )
+        VAR BorderColor = 
+            SWITCH(TRUE(),
+                [GoldRate] > 0.50, "#0D7C59",
+                [GoldRate] > 0.40, "#1E40AF",
+                "#B45309"
+            )
+        VAR RankPosition = RANKX(Top5Countries, [GoldRate], , DESC)
+        RETURN
+        "<div role='listitem' aria-label='Rank " & RankPosition & ": " & [Country] & " with " & FORMAT([GoldRate], "0.0%") & " gold conversion rate'
+            style='background: #FFFFFF; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border-left: 4px solid " & BorderColor & ";
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>
+            
+            <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 6px;'>
+                <span style='font-size: 11px; font-weight: 700; color: #6B7280; min-width: 24px;'>
+                    #" & RankPosition & "
+                </span>
+                <span style='font-size: 18px; font-weight: 700; color: " & BorderColor & "; min-width: 65px;'>" & 
+                    FORMAT([GoldRate], "0.0%") & 
+                "</span>
+                <span style='font-size: 11px; font-weight: 600; color: #111827; text-transform: uppercase; 
+                    padding: 2px 8px; background: " & BorderColor & "15; border-radius: 3px;'>" & 
+                    PerformanceLevel & 
+                "</span>
+            </div>
+            
+            <div style='font-size: 12px; font-weight: 600; color: #111827; margin-bottom: 8px;'>
+                " & [Country] & "
+            </div>
+            
+            <div style='font-size: 10px; color: #4B5563; line-height: 1.5;'>
+                <div style='margin-bottom: 3px;'>
+                    <strong style='color: #1F2937;'>" & [TotalGold] & "</strong> gold medals • 
+                    <strong style='color: #1F2937;'>" & [TotalMedals] & "</strong> medal winners • 
+                    <strong style='color: #1F2937;'>" & [UniqueAthletes] & "</strong> athletes
+                </div>
+                <div style='font-style: italic; color: #6B7280;'>
+                    " & FORMAT([MedalsPerAthlete], "0.0") & " medals per athlete — " &
+                    SWITCH(TRUE(),
+                        [MedalsPerAthlete] > 2, "Highly specialized program",
+                        [MedalsPerAthlete] > 1.5, "Strong core performers",
+                        "Broad talent development"
+                    ) & "
+                </div>
+            </div>
+        </div>",
+        "",
+        [GoldRate],
+        DESC
+    )
+
+RETURN
+"<div role='region' aria-label='Elite Gold Conversion Leaders Analysis' 
+    style='font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; 
+    font-size: 10px; 
+    line-height: 1.6; 
+    padding: 16px; 
+    background: #FAFAFA; 
+    border-radius: 6px;
+    border: 1px solid #E5E7EB;'>" &
+    StoryHeader &
+    StoryContext &
+    "<div role='list' aria-label='Top 5 countries ranking'>" &
+    RankingList &
+    "</div>" &
+"</div>"
