@@ -1,0 +1,258 @@
+Liquid_Glass_LandingPage_PowerBI = 
+"<div style=""width:1280px;height:720px;position:relative;overflow:hidden;font-family:'Space Grotesk',sans-serif;background:#0a0a12;"">
+<style>
+@keyframes gfade{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
+<canvas id=""bgc"" style=""position:absolute;inset:0;width:100%;height:100%;z-index:1;""></canvas>
+<div id=""glapp"" style=""position:absolute;inset:0;z-index:2;""></div>
+
+<div style=""position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;"">
+  <div style=""font-size:11px;letter-spacing:5px;text-transform:uppercase;color:#aa44ff;margin-bottom:14px;opacity:0;animation:gfade 1s 0.5s forwards;"">Power BI · Next Generation</div>
+  <div style=""font-size:72px;font-weight:700;color:#fff;line-height:1.05;opacity:0;animation:gfade 1s 0.8s forwards;text-shadow:0 0 60px rgba(160,80,255,0.6);"">Power BI</div>
+  <div style=""font-size:38px;font-weight:500;background:linear-gradient(90deg,#aa44ff,#ff44aa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:6px;opacity:0;animation:gfade 1s 1.0s forwards;"">Landing Pages</div>
+  <div style=""font-size:16px;color:rgba(255,255,255,0.35);margin-top:12px;opacity:0;animation:gfade 1s 1.2s forwards;"">with HTML Content Visual</div>
+  <div style=""display:flex;gap:10px;margin-top:24px;opacity:0;animation:gfade 1s 1.5s forwards;"">
+    <div style=""padding:7px 18px;border-radius:99px;font-size:12px;border:1px solid rgba(160,80,255,.5);color:rgba(200,140,255,0.9);background:rgba(160,80,255,.1);"">HTML Basics</div>
+    <div style=""padding:7px 18px;border-radius:99px;font-size:12px;border:1px solid rgba(255,80,160,.5);color:rgba(255,140,200,0.9);background:rgba(255,80,160,.1);"">Animations</div>
+    <div style=""padding:7px 18px;border-radius:99px;font-size:12px;border:1px solid rgba(80,140,255,.5);color:rgba(140,180,255,0.9);background:rgba(80,140,255,.1);"">DAX Integration</div>
+    <div style=""padding:7px 18px;border-radius:99px;font-size:12px;border:1px solid rgba(120,200,120,.5);color:rgba(160,220,160,0.9);background:rgba(120,200,120,.1);"">Power BI</div>
+  </div>
+  <div style=""font-size:11px;color:rgba(255,255,255,0.18);margin-top:32px;letter-spacing:.08em;opacity:0;animation:gfade 1s 2s forwards;"">drag to interact · click to spawn</div>
+</div>
+
+<script type=""module"">
+import * as THREE from 'https://unpkg.com/three@0.160.1/build/three.module.js';
+
+const MAX_DROPLETS=40,FIXED_DT_MS=8,MAX_FRAME_DT_MS=100,MAX_CATCHUP=6,MAX_ENTRIES=MAX_DROPLETS*2;
+const W=1280,H=720;
+
+const app=document.getElementById('glapp');
+const renderer=new THREE.WebGLRenderer({antialias:false});
+renderer.setPixelRatio(1);
+renderer.setSize(W,H);
+app.appendChild(renderer.domElement);
+renderer.domElement.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;';
+
+const scene=new THREE.Scene();
+const camera=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+
+/* background canvas */
+const bgCanvas=document.createElement('canvas');
+bgCanvas.width=W;bgCanvas.height=H;
+const bgCtx=bgCanvas.getContext('2d');
+const bgTexture=new THREE.CanvasTexture(bgCanvas);
+bgTexture.minFilter=THREE.LinearFilter;bgTexture.magFilter=THREE.LinearFilter;
+
+function drawBg(){
+  const w=W,h=H;
+  const grd=bgCtx.createLinearGradient(0,0,w,h);
+  grd.addColorStop(0,'#0d0020');grd.addColorStop(0.4,'#1a0040');
+  grd.addColorStop(0.7,'#0d0030');grd.addColorStop(1,'#050015');
+  bgCtx.fillStyle=grd;bgCtx.fillRect(0,0,w,h);
+
+  bgCtx.save();bgCtx.globalAlpha=0.22;
+  const hues=[270,290,310,250,280];
+  for(let i=0;i<5;i++){
+    const cx=w*(0.12+i*0.19),cy=h*(0.25+Math.sin(i*1.3)*0.25);
+    const rg=bgCtx.createRadialGradient(cx,cy,0,cx,cy,w*0.28);
+    rg.addColorStop(0,'hsla('+hues[i]+',80%,55%,0.7)');
+    rg.addColorStop(1,'hsla('+hues[i]+',60%,30%,0)');
+    bgCtx.fillStyle=rg;bgCtx.fillRect(0,0,w,h);
+  }
+  bgCtx.restore();
+
+  /* scattered words */
+  const words=['refraction','DAX','HTML','CSS','measure','visual','report','table','page','filter','slicer','canvas'];
+  bgCtx.globalAlpha=0.045;
+  bgCtx.font='400 18px Space Grotesk,sans-serif';
+  bgCtx.fillStyle='#ffffff';bgCtx.textAlign='center';bgCtx.textBaseline='middle';
+  for(let i=0;i<words.length;i++){
+    bgCtx.fillText(words[i],w*(0.09+(i%4)*0.27),h*(0.08+Math.floor(i/4)*0.35+(i%3)*0.12));
+  }
+  bgCtx.globalAlpha=1;
+  bgTexture.needsUpdate=true;
+}
+drawBg();
+
+/* droplet texture */
+const dropletBuf=new Float32Array(MAX_ENTRIES*4);
+const dropletTex=new THREE.DataTexture(dropletBuf,MAX_ENTRIES,1,THREE.RGBAFormat,THREE.FloatType);
+dropletTex.minFilter=THREE.NearestFilter;dropletTex.magFilter=THREE.NearestFilter;
+
+let drops=[],uid=0;
+function spawn(x,y,r,vx,vy){
+  if(drops.length>=MAX_DROPLETS)return;
+  const area=Math.PI*r*r,ang=Math.random()*Math.PI*2,spd=0.0003+Math.random()*0.0008;
+  drops.push({id:uid++,x,y,r,area,
+    vx:vx||Math.cos(ang)*spd,vy:vy||Math.sin(ang)*spd,alive:true,
+    wanderAngle:Math.random()*Math.PI*2,wanderSpeed:0.3+Math.random()*0.5,
+    softPrevX:x,softPrevY:y,softOffX:0,softOffY:0,softVelX:0,softVelY:0});
+}
+for(let i=0;i<12;i++) spawn((Math.random()-.5)*.7,(Math.random()-.5)*.5,0.03+Math.random()*0.05);
+
+const asp=W/H;
+const vertSrc='void main(){gl_Position=vec4(position,1.0);}';
+const fragSrc=`
+precision highp float;
+#define MAX_N ${MAX_ENTRIES}
+uniform vec2 uRes;uniform sampler2D uData;uniform sampler2D uBg;uniform int uCount;uniform float uTime;
+void main(){
+  vec2 uv=gl_FragCoord.xy/uRes;
+  float asp=uRes.x/uRes.y;
+  vec2 p=(uv-0.5)*vec2(asp,1.0);
+  float field=0.0;vec2 grad=vec2(0),lens=vec2(0);float lensW=0.0;
+  for(int i=0;i<MAX_N;i++){
+    if(i>=uCount)break;
+    vec4 d=texture2D(uData,vec2((float(i)+0.5)/float(MAX_N),0.5));
+    vec2 c=d.xy;float r=d.z;if(r<0.001)continue;
+    vec2 delta=p-c;float dSq=dot(delta,delta)+1e-5;
+    float contrib=r*r/dSq;field+=contrib;grad+=-2.0*contrib/dSq*delta;
+    float w=r*r/(dSq+r*r);lens+=(c-p)*w;lensW+=w;
+  }
+  lens/=(lensW+0.001);float lensLen=length(lens);
+  float thr=1.0,edge=smoothstep(thr-0.08,thr+0.03,field);
+  float mappedLens=atan(lensLen*6.0)*0.035;
+  vec2 refractDir=(lensLen>1e-5)?lens/lensLen:vec2(0);
+  float refractMask=smoothstep(thr-0.2,thr+1.5,field);
+  vec2 refractedUV=clamp(uv+refractDir*mappedLens*refractMask,0.001,0.999);
+  vec3 bgClean=texture2D(uBg,uv).rgb;
+  float gradLen=length(grad),nScale=atan(gradLen*0.5)*0.3;
+  vec2 nGrad=(gradLen>1e-4)?(grad/gradLen)*nScale:vec2(0);
+  vec3 N=normalize(vec3(-nGrad,1.0)),L=normalize(vec3(0.3,0.6,1.0)),V=vec3(0,0,1),H2=normalize(L+V);
+  float diff=max(dot(N,L),0.0),spec=pow(max(dot(N,H2),0.0),180.0);
+  float fresnel=0.04+0.96*pow(1.0-max(dot(N,V),0.0),4.0);
+  float rim=smoothstep(thr+0.6,thr,field)*edge;
+  float caStr=0.0018*edge;vec3 bgCA;
+  bgCA.r=texture2D(uBg,refractedUV+vec2(caStr,caStr*0.5)).r;
+  bgCA.g=texture2D(uBg,refractedUV).g;
+  bgCA.b=texture2D(uBg,refractedUV-vec2(caStr,caStr*0.5)).b;
+  float depth=smoothstep(thr,thr+3.0,field);
+  vec3 tint=mix(vec3(1.0),vec3(0.9,0.85,1.0),depth*0.5);
+  vec3 glassColor=bgCA*tint*(0.92+0.08*diff)+vec3(1)*spec*0.85+vec3(0.9,0.85,1.0)*rim*0.25+vec3(1)*fresnel*0.12;
+  float shadowField=smoothstep(thr-0.35,thr-0.05,field);
+  vec3 bg=bgClean*(1.0-shadowField*0.06);
+  float bOut=smoothstep(thr-0.10,thr-0.01,field),bIn=smoothstep(thr+0.0,thr+0.06,field);
+  vec3 col=mix(bg,glassColor,edge)+vec3(0.85,0.7,1.0)*bOut*(1.0-bIn)*0.35;
+  gl_FragColor=vec4(col,1.0);
+}`;
+
+const mat=new THREE.ShaderMaterial({vertexShader:vertSrc,fragmentShader:fragSrc,uniforms:{
+  uRes:{value:new THREE.Vector2(W,H)},uData:{value:dropletTex},
+  uBg:{value:bgTexture},uCount:{value:0},uTime:{value:0}}});
+scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),mat));
+
+const mouse={x:999,y:999,active:false,down:false};let spawnCD=0;
+const cvs=renderer.domElement;
+cvs.addEventListener('pointermove',e=>{
+  const rect=cvs.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width-0.5)*asp;
+  mouse.y=0.5-(e.clientY-rect.top)/rect.height;mouse.active=true;});
+cvs.addEventListener('pointerdown',()=>mouse.down=true);
+cvs.addEventListener('pointerup',()=>mouse.down=false);
+cvs.addEventListener('pointerleave',()=>{mouse.active=false;mouse.down=false;});
+
+const DAMP=0.993,MOUSE_R=0.18,MOUSE_F=0.004,TENSION_RANGE=0.12,TENSION_F=0.0004,
+  MERGE_RATIO=0.62,SPLIT_SPEED=0.013,SPLIT_MIN_R=0.04,MAX_SPEED=0.015,
+  BOUNCE=0.4,WANDER_F=0.00004,CENTER_PULL=0.000008;
+
+function applyForces(){
+  for(const d of drops){
+    d.wanderAngle+=(Math.random()-.5)*d.wanderSpeed;
+    d.vx+=Math.cos(d.wanderAngle)*WANDER_F;d.vy+=Math.sin(d.wanderAngle)*WANDER_F;
+    d.vx-=d.x*CENTER_PULL;d.vy-=d.y*CENTER_PULL;
+    if(mouse.active){
+      const dx=d.x-mouse.x,dy=d.y-mouse.y,dSq=dx*dx+dy*dy,rr=MOUSE_R+d.r;
+      if(dSq<rr*rr&&dSq>1e-5){const dist=Math.sqrt(dSq),s=1-dist/rr,f=s*s*MOUSE_F;
+        d.vx+=(dx/dist)*f;d.vy+=(dy/dist)*f;}
+    }
+  }
+  for(let i=0;i<drops.length;i++){const a=drops[i];
+    for(let j=i+1;j<drops.length;j++){const b=drops[j];
+      const dx=b.x-a.x,dy=b.y-a.y,dSq=dx*dx+dy*dy,rng=TENSION_RANGE+a.r+b.r;
+      if(dSq<rng*rng&&dSq>1e-5){const dist=Math.sqrt(dSq),s=1-dist/rng,f=s*TENSION_F,
+        fx=(dx/dist)*f,fy=(dy/dist)*f;a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;}}}
+}
+
+function integrate(){
+  for(const d of drops){
+    const sp=Math.sqrt(d.vx*d.vx+d.vy*d.vy);if(sp>MAX_SPEED){const s=MAX_SPEED/sp;d.vx*=s;d.vy*=s;}
+    d.x+=d.vx;d.y+=d.vy;d.vx*=DAMP;d.vy*=DAMP;
+    const wx=asp*0.5,wy=0.5;
+    if(d.x-d.r<-wx){d.x=-wx+d.r;d.vx=Math.abs(d.vx)*BOUNCE;}
+    if(d.x+d.r>wx){d.x=wx-d.r;d.vx=-Math.abs(d.vx)*BOUNCE;}
+    if(d.y-d.r<-wy){d.y=-wy+d.r;d.vy=Math.abs(d.vy)*BOUNCE;}
+    if(d.y+d.r>wy){d.y=wy-d.r;d.vy=-Math.abs(d.vy)*BOUNCE;}
+  }
+}
+
+function mergeDroplets(){
+  for(let i=0;i<drops.length;i++){const a=drops[i];if(!a.alive)continue;
+    for(let j=i+1;j<drops.length;j++){const b=drops[j];if(!b.alive)continue;
+      const dx=b.x-a.x,dy=b.y-a.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<(a.r+b.r)*MERGE_RATIO){const na=a.area+b.area;
+        a.x=(a.x*a.area+b.x*b.area)/na;a.y=(a.y*a.area+b.y*b.area)/na;
+        a.vx=(a.vx*a.area+b.vx*b.area)/na;a.vy=(a.vy*a.area+b.vy*b.area)/na;
+        a.r=Math.sqrt(na/Math.PI);a.area=na;b.alive=false;}}}
+  drops=drops.filter(d=>d.alive);
+}
+
+function splitDroplets(){
+  const add=[];
+  for(const d of drops){
+    if(d.r<SPLIT_MIN_R)continue;
+    const sp=Math.sqrt(d.vx*d.vx+d.vy*d.vy);if(sp<SPLIT_SPEED)continue;
+    const ha=d.area*0.5,nr=Math.sqrt(ha/Math.PI),nx=-d.vy/sp,ny=d.vx/sp,off=nr*0.7;
+    d.r=nr;d.area=ha;d.x-=nx*off;d.y-=ny*off;
+    if(drops.length+add.length<MAX_DROPLETS)add.push({id:uid++,
+      x:d.x+nx*off*2,y:d.y+ny*off*2,r:nr,area:ha,
+      vx:d.vx+nx*sp*0.35,vy:d.vy+ny*sp*0.35,alive:true,
+      wanderAngle:Math.random()*Math.PI*2,wanderSpeed:0.3+Math.random()*0.5,
+      softPrevX:d.x+nx*off*2,softPrevY:d.y+ny*off*2,softOffX:0,softOffY:0,softVelX:0,softVelY:0});
+  }
+  for(const a of add)drops.push(a);
+}
+
+let autoTimer=0;
+function autoSpawn(){autoTimer+=FIXED_DT_MS;
+  if(autoTimer>2000&&drops.length<10){autoTimer=0;
+    spawn((Math.random()-.5)*asp*0.6,(Math.random()-.5)*0.6,0.025+Math.random()*0.03);}}
+
+function mouseSpawn(){if(!mouse.down||!mouse.active)return;spawnCD-=FIXED_DT_MS;
+  if(spawnCD<=0&&drops.length<MAX_DROPLETS){spawnCD=120;
+    spawn(mouse.x+(Math.random()-.5)*0.02,mouse.y+(Math.random()-.5)*0.02,0.02+Math.random()*0.015);}}
+
+function updateSoftBodies(){
+  for(const d of drops){
+    const dx=d.x-d.softPrevX,dy=d.y-d.softPrevY;
+    d.softVelX+=(dx-d.softOffX)*0.22;d.softVelY+=(dy-d.softOffY)*0.22;
+    d.softVelX*=0.6;d.softVelY*=0.6;
+    d.softOffX+=d.softVelX;d.softOffY+=d.softVelY;
+    d.softPrevX=d.x;d.softPrevY=d.y;
+  }
+}
+
+function fixedUpdate(){applyForces();integrate();mergeDroplets();splitDroplets();updateSoftBodies();autoSpawn();mouseSpawn();}
+
+function sync(){
+  dropletBuf.fill(0);const n=Math.min(drops.length,MAX_DROPLETS);
+  for(let i=0;i<n;i++){const d=drops[i];
+    dropletBuf[i*4]=d.x;dropletBuf[i*4+1]=d.y;dropletBuf[i*4+2]=d.r;dropletBuf[i*4+3]=1;
+    const gi=(n+i)*4;
+    dropletBuf[gi]=d.x-d.softOffX*3.5;dropletBuf[gi+1]=d.y-d.softOffY*3.5;
+    dropletBuf[gi+2]=d.r*0.7;dropletBuf[gi+3]=1;
+  }
+  dropletTex.needsUpdate=true;mat.uniforms.uCount.value=n*2;
+}
+
+let last=performance.now(),acc=0,paused=false;
+document.addEventListener('visibilitychange',()=>{paused=document.hidden;if(!paused)last=performance.now();});
+(function loop(){
+  if(paused){requestAnimationFrame(loop);return;}
+  const now=performance.now(),dt=Math.min(now-last,MAX_FRAME_DT_MS);last=now;acc+=dt;
+  let g=0;while(acc>=FIXED_DT_MS&&g<MAX_CATCHUP){fixedUpdate();acc-=FIXED_DT_MS;g++;}
+  if(g>=MAX_CATCHUP)acc=0;
+  mat.uniforms.uTime.value=now*0.001;sync();renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+})();
+</script>
+</div>"
